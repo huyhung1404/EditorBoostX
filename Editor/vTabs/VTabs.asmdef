@@ -1,13 +1,7 @@
 {
-    "name": "EditorBoostX",
-    "rootNamespace": "EditorBoostX",
-    "references": [
-        "VFavorites",
-        "VFolders",
-        "VInspector",
-        "VHierarchy",
-        "VTabs"
-    ],
+    "name": "VTabs",
+    "rootNamespace": "",
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -16,9 +10,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "UNITY_EDITOR"
-    ],
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }

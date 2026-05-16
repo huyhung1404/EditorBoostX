@@ -9,6 +9,8 @@ namespace EditorBoostX
         private static Editor s_paletteEditorInstance;
         private static Editor s_hierarchyPaletteEditorInstance;
 
+        #region Foldout States (Persisted)
+
         private static bool s_vFavoritesFoldout
         {
             get => EditorPrefs.GetBool("EditorBoostX_vFavoritesFoldout", true);
@@ -63,6 +65,10 @@ namespace EditorBoostX
             set => EditorPrefs.SetBool("EditorBoostX_vHierarchyPaletteFoldout", value);
         }
 
+        private static bool s_vTabsFoldout { get => EditorPrefs.GetBool("EditorBoostX_vTabsFoldout", true); set => EditorPrefs.SetBool("EditorBoostX_vTabsFoldout", value); }
+
+        #endregion
+
         [SettingsProvider]
         public static SettingsProvider CreateProvider()
         {
@@ -76,6 +82,7 @@ namespace EditorBoostX
                     DrawFolders();
                     DrawHierarchy();
                     DrawInspector();
+                    DrawTabs();
                     EditorGUILayout.EndVertical();
                 },
                 deactivateHandler = () =>
@@ -95,6 +102,8 @@ namespace EditorBoostX
             };
             return provider;
         }
+
+        #region Favorites
 
         private static void DrawFavorites()
         {
@@ -289,34 +298,9 @@ namespace EditorBoostX
             EditorGUILayout.Space(2);
         }
 
-        public static bool DrawSwitchToggle(Rect rect, bool value)
-        {
-            var e = Event.current;
+        #endregion
 
-            if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
-            {
-                value = !value;
-                GUI.changed = true;
-                e.Use();
-            }
-
-            if (e.type != EventType.Repaint) return value;
-            var bgColor = value ? new Color(0.2f, 0.84f, 0.29f) : new Color(0.45f, 0.45f, 0.45f);
-
-            GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, bgColor, 0, rect.height / 2f);
-
-            const float padding = 2f;
-            var knobSize = rect.height - padding * 2f;
-
-            var knobX = value ? (rect.x + rect.width - knobSize - padding) : (rect.x + padding);
-            var knobRect = new Rect(knobX, rect.y + padding, knobSize, knobSize);
-
-            var shadowRect = new Rect(knobRect.x, knobRect.y + 1.5f, knobSize, knobSize);
-            GUI.DrawTexture(shadowRect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, new Color(0f, 0f, 0f, 0.35f), 0, knobSize / 2f);
-            GUI.DrawTexture(knobRect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, Color.white, 0, knobSize / 2f);
-
-            return value;
-        }
+        #region Folder
 
         private static void DrawFolders()
         {
@@ -570,6 +554,8 @@ namespace EditorBoostX
             VFolders.VFoldersPalette.instance.Save();
         }
 
+        #endregion
+
         #region Inspector
 
         private static void DrawInspector()
@@ -716,8 +702,9 @@ namespace EditorBoostX
         }
 
         #endregion
-        
+
         #region Hierarchy
+
         private static void DrawHierarchy()
         {
             EditorGUILayout.Space(5);
@@ -763,31 +750,59 @@ namespace EditorBoostX
 
             EditorGUI.BeginChangeCheck();
             var nav = EditorGUILayout.ToggleLeft("Navigation bar", VHierarchy.VHierarchyMenu.navigationBarEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.navigationBarEnabled = nav; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.navigationBarEnabled = nav;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.BeginChangeCheck();
             var sel = EditorGUILayout.ToggleLeft("Scene selector", VHierarchy.VHierarchyMenu.sceneSelectorEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.sceneSelectorEnabled = sel; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.sceneSelectorEnabled = sel;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.BeginChangeCheck();
             var compMap = EditorGUILayout.ToggleLeft("Component minimap", VHierarchy.VHierarchyMenu.componentMinimapEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.componentMinimapEnabled = compMap; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.componentMinimapEnabled = compMap;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.BeginChangeCheck();
             var actToggle = EditorGUILayout.ToggleLeft("Activation toggle", VHierarchy.VHierarchyMenu.activationToggleEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.activationToggleEnabled = actToggle; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.activationToggleEnabled = actToggle;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.BeginChangeCheck();
             var lines = EditorGUILayout.ToggleLeft("Hierarchy lines", VHierarchy.VHierarchyMenu.hierarchyLinesEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.hierarchyLinesEnabled = lines; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.hierarchyLinesEnabled = lines;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.BeginChangeCheck();
             var zebra = EditorGUILayout.ToggleLeft("Zebra striping", VHierarchy.VHierarchyMenu.zebraStripingEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.zebraStripingEnabled = zebra; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.zebraStripingEnabled = zebra;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.BeginChangeCheck();
             var min = EditorGUILayout.ToggleLeft("Minimal mode", VHierarchy.VHierarchyMenu.minimalModeEnabled);
-            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.minimalModeEnabled = min; EditorApplication.RepaintHierarchyWindow(); }
+            if (EditorGUI.EndChangeCheck())
+            {
+                VHierarchy.VHierarchyMenu.minimalModeEnabled = min;
+                EditorApplication.RepaintHierarchyWindow();
+            }
 
             EditorGUI.indentLevel--;
 
@@ -800,9 +815,10 @@ namespace EditorBoostX
             VHierarchy.VHierarchyMenu.deleteEnabled = EditorGUILayout.ToggleLeft("X to delete", VHierarchy.VHierarchyMenu.deleteEnabled);
             VHierarchy.VHierarchyMenu.toggleExpandedEnabled = EditorGUILayout.ToggleLeft("E to expand or collapse", VHierarchy.VHierarchyMenu.toggleExpandedEnabled);
             VHierarchy.VHierarchyMenu.isolateEnabled = EditorGUILayout.ToggleLeft("Shift-E to isolate", VHierarchy.VHierarchyMenu.isolateEnabled);
-            VHierarchy.VHierarchyMenu.collapseEverythingEnabled = EditorGUILayout.ToggleLeft("Ctrl-Shift-E to collapse all", VHierarchy.VHierarchyMenu.collapseEverythingEnabled);
+            VHierarchy.VHierarchyMenu.collapseEverythingEnabled =
+                EditorGUILayout.ToggleLeft("Ctrl-Shift-E to collapse all", VHierarchy.VHierarchyMenu.collapseEverythingEnabled);
             EditorGUI.indentLevel--;
-            
+
             EditorGUILayout.Space(10);
             var dataHeaderRect = EditorGUILayout.GetControlRect(false, 18);
             var dataBgRect = new Rect(dataHeaderRect.x + 18, dataHeaderRect.y - 3, dataHeaderRect.width - 18, dataHeaderRect.height + 4);
@@ -811,7 +827,7 @@ namespace EditorBoostX
             var transparentFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
             var dataFoldoutRect = new Rect(dataHeaderRect.x + 4, dataHeaderRect.y, dataHeaderRect.width, dataHeaderRect.height);
             s_vHierarchyDataFoldout = EditorGUI.Foldout(dataFoldoutRect, s_vHierarchyDataFoldout, "Data", true, transparentFoldoutStyle);
-            
+
             DrawVHierarchyDataContent();
             DrawVHierarchyPalette(transparentFoldoutStyle);
         }
@@ -835,14 +851,19 @@ namespace EditorBoostX
             var style = new GUIStyle(EditorStyles.label) { wordWrap = true };
             if (!isTeamMode)
             {
-                EditorGUILayout.LabelField("This file stores data about which icons and colors are assigned to objects, along with bookmarks from navigation bar and scene selector.", style);
+                EditorGUILayout.LabelField(
+                    "This file stores data about which icons and colors are assigned to objects, along with bookmarks from navigation bar and scene selector.", style);
                 EditorGUILayout.Space(6);
-                EditorGUILayout.LabelField("If there are multiple people working on the project, you might want to store icon/color data in scenes to avoid merge conflicts. To do that, click the button below.", style);
+                EditorGUILayout.LabelField(
+                    "If there are multiple people working on the project, you might want to store icon/color data in scenes to avoid merge conflicts. To do that, click the button below.",
+                    style);
             }
             else
             {
-                EditorGUILayout.LabelField("Now that Team Mode is enabled, create an empty script that inherits from VHierarchy.VHierarchyDataComponent and add it to any object in a scene.", style);
+                EditorGUILayout.LabelField(
+                    "Now that Team Mode is enabled, create an empty script that inherits from VHierarchy.VHierarchyDataComponent and add it to any object in a scene.", style);
             }
+
             EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space(8);
@@ -851,7 +872,9 @@ namespace EditorBoostX
             {
                 if (!isTeamMode)
                 {
-                    var option = EditorUtility.DisplayDialogComplex("Licensing notice", "To use vHierarchy 2 within a team, licenses must be purchased for each individual user as per the Asset Store EULA.\n\n Sharing one license across the team is illegal and considered piracy.", "Acknowledge", null, null);
+                    var option = EditorUtility.DisplayDialogComplex("Licensing notice",
+                        "To use vHierarchy 2 within a team, licenses must be purchased for each individual user as per the Asset Store EULA.\n\n Sharing one license across the team is illegal and considered piracy.",
+                        "Acknowledge", null, null);
                     if (option == 0)
                     {
                         VHierarchy.VHierarchyData.teamModeEnabled = true;
@@ -889,13 +912,13 @@ namespace EditorBoostX
 
             var dataFoldoutRect = new Rect(paletteHeaderRect.x + 4, paletteHeaderRect.y, paletteHeaderRect.width, paletteHeaderRect.height);
             s_vHierarchyPaletteFoldout = EditorGUI.Foldout(dataFoldoutRect, s_vHierarchyPaletteFoldout, "Palette Data", true, transparentFoldoutStyle);
-            
+
             if (!s_vHierarchyPaletteFoldout) return;
 
             var config = VHierarchy.VHierarchyPalette.instance;
             if (config == null) return;
 
-  
+
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             if (s_hierarchyPaletteEditorInstance == null || s_hierarchyPaletteEditorInstance.target != config)
@@ -913,6 +936,176 @@ namespace EditorBoostX
             EditorGUILayout.Space(5);
             VHierarchy.VHierarchyPalette.instance.Save();
         }
+
         #endregion
+
+        #region Tabs
+
+        private static void DrawTabs()
+        {
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            var headerRect = EditorGUILayout.GetControlRect(false, 26);
+            var bgRect = new Rect(headerRect.x - 3, headerRect.y - 3, headerRect.width + 6, headerRect.height + 4);
+            GUI.Box(bgRect, GUIContent.none, GUI.skin.box);
+
+            var transparentFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
+
+            var foldoutRect = new Rect(headerRect.x + 4, headerRect.y, headerRect.width - 55, headerRect.height);
+            s_vTabsFoldout = EditorGUI.Foldout(foldoutRect, s_vTabsFoldout, "Tabs", true, transparentFoldoutStyle);
+
+            var toggleRect = new Rect(headerRect.xMax - 45, headerRect.y + 3, 45, 20);
+
+            var isEnabled = !VTabs.VTabsMenu.pluginDisabled;
+            var newEnabled = DrawSwitchToggle(toggleRect, isEnabled);
+
+            if (newEnabled != isEnabled)
+            {
+                VTabs.VTabsMenu.pluginDisabled = !newEnabled;
+                VTabs.VTabs.UpdateStyleSheet();
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+
+            if (s_vTabsFoldout && newEnabled)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.Space(5);
+                DrawVTabsSettings();
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space(5);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private static void DrawVTabsSettings()
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Features", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+
+            EditorGUI.BeginChangeCheck();
+            var addBtn = EditorGUILayout.ToggleLeft("Add Tab button", VTabs.VTabsMenu.addTabButtonEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VTabs.VTabsMenu.addTabButtonEnabled = addBtn;
+                VTabs.VTabs.RepaintAllDockAreas();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var closeBtn = EditorGUILayout.ToggleLeft("Close Tab button", VTabs.VTabsMenu.closeTabButtonEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VTabs.VTabsMenu.closeTabButtonEnabled = closeBtn;
+                VTabs.VTabs.RepaintAllDockAreas();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var dividers = EditorGUILayout.ToggleLeft("Tab dividers", VTabs.VTabsMenu.dividersEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VTabs.VTabsMenu.dividersEnabled = dividers;
+                VTabs.VTabs.RepaintAllDockAreas();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var hideLock = EditorGUILayout.ToggleLeft("Hide lock button", VTabs.VTabsMenu.hideLockButtonEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VTabs.VTabsMenu.hideLockButtonEnabled = hideLock;
+                VTabs.VTabs.RepaintAllDockAreas();
+            }
+
+#if UNITY_6000_0_OR_NEWER
+            EditorGUILayout.Space(3);
+
+            EditorGUI.BeginChangeCheck();
+            var tabStyleOptions = new[] { "Default", "Large", "Neat" };
+            var selectedTabStyle = EditorGUILayout.Popup("Tab style", VTabs.VTabsMenu.tabStyle, tabStyleOptions);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VTabs.VTabsMenu.tabStyle = selectedTabStyle;
+                VTabs.VTabs.UpdateStyleSheet();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var bgStyleOptions = new[] { "Default", "Classic", "Grey" };
+            var selectedBgStyle = EditorGUILayout.Popup("Background style", VTabs.VTabsMenu.backgroundStyle, bgStyleOptions);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VTabs.VTabsMenu.backgroundStyle = selectedBgStyle;
+                VTabs.VTabs.UpdateStyleSheet();
+            }
+#endif
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Shortcuts", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            VTabs.VTabsMenu.switchTabShortcutEnabled = EditorGUILayout.ToggleLeft("Shift-Scroll to switch tab", VTabs.VTabsMenu.switchTabShortcutEnabled);
+#if UNITY_EDITOR_OSX
+            var cmdKey = "Cmd";
+#else
+            var cmdKey = "Ctrl";
+#endif
+            VTabs.VTabsMenu.addTabShortcutEnabled = EditorGUILayout.ToggleLeft($"{cmdKey}-T to add tab", VTabs.VTabsMenu.addTabShortcutEnabled);
+            VTabs.VTabsMenu.closeTabShortcutEnabled = EditorGUILayout.ToggleLeft($"{cmdKey}-W to close tab", VTabs.VTabsMenu.closeTabShortcutEnabled);
+            VTabs.VTabsMenu.reopenTabShortcutEnabled = EditorGUILayout.ToggleLeft($"{cmdKey}-Shift-T to reopen closed tab", VTabs.VTabsMenu.reopenTabShortcutEnabled);
+            EditorGUI.indentLevel--;
+
+#if UNITY_EDITOR_OSX
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Trackpad", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            VTabs.VTabsMenu.sidescrollEnabled = EditorGUILayout.ToggleLeft("Sidescroll to switch tab", VTabs.VTabsMenu.sidescrollEnabled);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Sensitivity");
+            if (GUILayout.Button("-", EditorStyles.miniButtonLeft, GUILayout.Width(25))) 
+            { 
+                VTabs.VTabsMenu.sidescrollSensitivity -= 0.2f; 
+                Debug.Log($"vTabs: trackpad sensitivity decreased to {VTabs.VTabsMenu.sidescrollSensitivity * 100}%"); 
+            }
+            if (GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(25))) 
+            { 
+                VTabs.VTabsMenu.sidescrollSensitivity += 0.2f; 
+                Debug.Log($"vTabs: trackpad sensitivity increased to {VTabs.VTabsMenu.sidescrollSensitivity * 100}%"); 
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.indentLevel--;
+#endif
+        }
+
+        #endregion
+
+        public static bool DrawSwitchToggle(Rect rect, bool value)
+        {
+            var e = Event.current;
+
+            if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
+            {
+                value = !value;
+                GUI.changed = true;
+                e.Use();
+            }
+
+            if (e.type != EventType.Repaint) return value;
+            var bgColor = value ? new Color(0.2f, 0.84f, 0.29f) : new Color(0.45f, 0.45f, 0.45f);
+
+            GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, bgColor, 0, rect.height / 2f);
+
+            const float padding = 2f;
+            var knobSize = rect.height - padding * 2f;
+
+            var knobX = value ? (rect.x + rect.width - knobSize - padding) : (rect.x + padding);
+            var knobRect = new Rect(knobX, rect.y + padding, knobSize, knobSize);
+
+            var shadowRect = new Rect(knobRect.x, knobRect.y + 1.5f, knobSize, knobSize);
+            GUI.DrawTexture(shadowRect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, new Color(0f, 0f, 0f, 0.35f), 0, knobSize / 2f);
+            GUI.DrawTexture(knobRect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, Color.white, 0, knobSize / 2f);
+
+            return value;
+        }
     }
 }
