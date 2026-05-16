@@ -7,6 +7,7 @@ namespace EditorBoostX
     public static class EditorProvider
     {
         private static Editor s_paletteEditorInstance;
+        private static Editor s_hierarchyPaletteEditorInstance;
 
         private static bool s_vFavoritesFoldout
         {
@@ -44,6 +45,24 @@ namespace EditorBoostX
             set => EditorPrefs.SetBool("EditorBoostX_vInspectorFoldout", value);
         }
 
+        private static bool s_vHierarchyFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vHierarchyFoldout", true);
+            set => EditorPrefs.SetBool("EditorBoostX_vHierarchyFoldout", value);
+        }
+
+        private static bool s_vHierarchyDataFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vHierarchyDataFoldout", false);
+            set => EditorPrefs.SetBool("EditorBoostX_vHierarchyDataFoldout", value);
+        }
+
+        private static bool s_vHierarchyPaletteFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vHierarchyPaletteFoldout", false);
+            set => EditorPrefs.SetBool("EditorBoostX_vHierarchyPaletteFoldout", value);
+        }
+
         [SettingsProvider]
         public static SettingsProvider CreateProvider()
         {
@@ -55,14 +74,23 @@ namespace EditorBoostX
                     EditorGUILayout.BeginVertical(new GUIStyle { padding = new RectOffset(5, 5, 5, 5) });
                     DrawFavorites();
                     DrawFolders();
+                    DrawHierarchy();
                     DrawInspector();
                     EditorGUILayout.EndVertical();
                 },
                 deactivateHandler = () =>
                 {
-                    if (s_paletteEditorInstance == null) return;
-                    Object.DestroyImmediate(s_paletteEditorInstance);
-                    s_paletteEditorInstance = null;
+                    if (s_paletteEditorInstance != null)
+                    {
+                        Object.DestroyImmediate(s_paletteEditorInstance);
+                        s_paletteEditorInstance = null;
+                    }
+
+                    if (s_hierarchyPaletteEditorInstance != null)
+                    {
+                        Object.DestroyImmediate(s_hierarchyPaletteEditorInstance);
+                        s_hierarchyPaletteEditorInstance = null;
+                    }
                 }
             };
             return provider;
@@ -559,7 +587,7 @@ namespace EditorBoostX
             s_vInspectorFoldout = EditorGUI.Foldout(foldoutRect, s_vInspectorFoldout, "Inspector", true, transparentFoldoutStyle);
 
             var toggleRect = new Rect(headerRect.xMax - 45, headerRect.y + 3, 45, 20);
-            
+
             var isEnabled = !VInspector.VInspectorMenu.pluginDisabled;
             var newEnabled = DrawSwitchToggle(toggleRect, isEnabled);
 
@@ -587,7 +615,7 @@ namespace EditorBoostX
             EditorGUILayout.Space(2);
             EditorGUILayout.LabelField("Features", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
-            
+
             EditorGUI.BeginChangeCheck();
             var nav = EditorGUILayout.ToggleLeft("Navigation bar", VInspector.VInspectorMenu.navigationBarEnabled);
             if (EditorGUI.EndChangeCheck())
@@ -687,6 +715,204 @@ namespace EditorBoostX
             EditorGUI.indentLevel--;
         }
 
+        #endregion
+        
+        #region Hierarchy
+        private static void DrawHierarchy()
+        {
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            var headerRect = EditorGUILayout.GetControlRect(false, 26);
+            var bgRect = new Rect(headerRect.x - 3, headerRect.y - 3, headerRect.width + 6, headerRect.height + 4);
+            GUI.Box(bgRect, GUIContent.none, GUI.skin.box);
+
+            var transparentFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
+
+            var foldoutRect = new Rect(headerRect.x + 4, headerRect.y, headerRect.width - 55, headerRect.height);
+            s_vHierarchyFoldout = EditorGUI.Foldout(foldoutRect, s_vHierarchyFoldout, "Hierarchy", true, transparentFoldoutStyle);
+
+            var toggleRect = new Rect(headerRect.xMax - 45, headerRect.y + 3, 45, 20);
+
+            var isEnabled = !VHierarchy.VHierarchyMenu.pluginDisabled;
+            var newEnabled = DrawSwitchToggle(toggleRect, isEnabled);
+
+            if (newEnabled != isEnabled)
+            {
+                VHierarchy.VHierarchyMenu.pluginDisabled = !newEnabled;
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+
+            if (s_vHierarchyFoldout && newEnabled)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.Space(5);
+                DrawVHierarchySettings();
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space(5);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private static void DrawVHierarchySettings()
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Features", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+
+            EditorGUI.BeginChangeCheck();
+            var nav = EditorGUILayout.ToggleLeft("Navigation bar", VHierarchy.VHierarchyMenu.navigationBarEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.navigationBarEnabled = nav; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.BeginChangeCheck();
+            var sel = EditorGUILayout.ToggleLeft("Scene selector", VHierarchy.VHierarchyMenu.sceneSelectorEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.sceneSelectorEnabled = sel; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.BeginChangeCheck();
+            var compMap = EditorGUILayout.ToggleLeft("Component minimap", VHierarchy.VHierarchyMenu.componentMinimapEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.componentMinimapEnabled = compMap; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.BeginChangeCheck();
+            var actToggle = EditorGUILayout.ToggleLeft("Activation toggle", VHierarchy.VHierarchyMenu.activationToggleEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.activationToggleEnabled = actToggle; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.BeginChangeCheck();
+            var lines = EditorGUILayout.ToggleLeft("Hierarchy lines", VHierarchy.VHierarchyMenu.hierarchyLinesEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.hierarchyLinesEnabled = lines; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.BeginChangeCheck();
+            var zebra = EditorGUILayout.ToggleLeft("Zebra striping", VHierarchy.VHierarchyMenu.zebraStripingEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.zebraStripingEnabled = zebra; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.BeginChangeCheck();
+            var min = EditorGUILayout.ToggleLeft("Minimal mode", VHierarchy.VHierarchyMenu.minimalModeEnabled);
+            if (EditorGUI.EndChangeCheck()) { VHierarchy.VHierarchyMenu.minimalModeEnabled = min; EditorApplication.RepaintHierarchyWindow(); }
+
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Shortcuts", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            VHierarchy.VHierarchyMenu.setDefaultParentEnabled = EditorGUILayout.ToggleLeft("D to set default parent", VHierarchy.VHierarchyMenu.setDefaultParentEnabled);
+            VHierarchy.VHierarchyMenu.toggleActiveEnabled = EditorGUILayout.ToggleLeft("A to toggle active", VHierarchy.VHierarchyMenu.toggleActiveEnabled);
+            VHierarchy.VHierarchyMenu.focusEnabled = EditorGUILayout.ToggleLeft("F to focus", VHierarchy.VHierarchyMenu.focusEnabled);
+            VHierarchy.VHierarchyMenu.deleteEnabled = EditorGUILayout.ToggleLeft("X to delete", VHierarchy.VHierarchyMenu.deleteEnabled);
+            VHierarchy.VHierarchyMenu.toggleExpandedEnabled = EditorGUILayout.ToggleLeft("E to expand or collapse", VHierarchy.VHierarchyMenu.toggleExpandedEnabled);
+            VHierarchy.VHierarchyMenu.isolateEnabled = EditorGUILayout.ToggleLeft("Shift-E to isolate", VHierarchy.VHierarchyMenu.isolateEnabled);
+            VHierarchy.VHierarchyMenu.collapseEverythingEnabled = EditorGUILayout.ToggleLeft("Ctrl-Shift-E to collapse all", VHierarchy.VHierarchyMenu.collapseEverythingEnabled);
+            EditorGUI.indentLevel--;
+            
+            EditorGUILayout.Space(10);
+            var dataHeaderRect = EditorGUILayout.GetControlRect(false, 18);
+            var dataBgRect = new Rect(dataHeaderRect.x + 18, dataHeaderRect.y - 3, dataHeaderRect.width - 18, dataHeaderRect.height + 4);
+            GUI.Box(dataBgRect, GUIContent.none, GUI.skin.box);
+
+            var transparentFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
+            var dataFoldoutRect = new Rect(dataHeaderRect.x + 4, dataHeaderRect.y, dataHeaderRect.width, dataHeaderRect.height);
+            s_vHierarchyDataFoldout = EditorGUI.Foldout(dataFoldoutRect, s_vHierarchyDataFoldout, "Data", true, transparentFoldoutStyle);
+            
+            DrawVHierarchyDataContent();
+            DrawVHierarchyPalette(transparentFoldoutStyle);
+        }
+
+        private static void DrawVHierarchyDataContent()
+        {
+            if (!s_vHierarchyDataFoldout) return;
+            var config = VHierarchy.VHierarchyData.instance;
+            if (config == null) return;
+
+            var serializedObject = new SerializedObject(config);
+            serializedObject.Update();
+            EditorGUI.BeginChangeCheck();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(28);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            var isTeamMode = VHierarchy.VHierarchyData.teamModeEnabled;
+            EditorGUI.BeginDisabledGroup(true);
+            var style = new GUIStyle(EditorStyles.label) { wordWrap = true };
+            if (!isTeamMode)
+            {
+                EditorGUILayout.LabelField("This file stores data about which icons and colors are assigned to objects, along with bookmarks from navigation bar and scene selector.", style);
+                EditorGUILayout.Space(6);
+                EditorGUILayout.LabelField("If there are multiple people working on the project, you might want to store icon/color data in scenes to avoid merge conflicts. To do that, click the button below.", style);
+            }
+            else
+            {
+                EditorGUILayout.LabelField("Now that Team Mode is enabled, create an empty script that inherits from VHierarchy.VHierarchyDataComponent and add it to any object in a scene.", style);
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUILayout.Space(8);
+
+            if (GUILayout.Button(isTeamMode ? "Disable Team Mode" : "Enable Team Mode", GUILayout.Height(24)))
+            {
+                if (!isTeamMode)
+                {
+                    var option = EditorUtility.DisplayDialogComplex("Licensing notice", "To use vHierarchy 2 within a team, licenses must be purchased for each individual user as per the Asset Store EULA.\n\n Sharing one license across the team is illegal and considered piracy.", "Acknowledge", null, null);
+                    if (option == 0)
+                    {
+                        VHierarchy.VHierarchyData.teamModeEnabled = true;
+                        VHierarchy.VHierarchy.goInfoCache.Clear();
+                        VHierarchy.VHierarchy.goDataCache.Clear();
+                        EditorApplication.RepaintHierarchyWindow();
+                    }
+                }
+                else
+                {
+                    VHierarchy.VHierarchyData.teamModeEnabled = false;
+                    VHierarchy.VHierarchy.goInfoCache.Clear();
+                    VHierarchy.VHierarchy.goDataCache.Clear();
+                    EditorApplication.RepaintHierarchyWindow();
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndHorizontal();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+                VHierarchy.VHierarchyData.instance.Save();
+                EditorUtility.SetDirty(config);
+            }
+        }
+
+        private static void DrawVHierarchyPalette(GUIStyle transparentFoldoutStyle)
+        {
+            EditorGUILayout.Space(10);
+            var paletteHeaderRect = EditorGUILayout.GetControlRect(false, 18);
+            var paletteBgRect = new Rect(paletteHeaderRect.x + 18, paletteHeaderRect.y - 3, paletteHeaderRect.width - 18, paletteHeaderRect.height + 4);
+            GUI.Box(paletteBgRect, GUIContent.none, GUI.skin.box);
+
+            var dataFoldoutRect = new Rect(paletteHeaderRect.x + 4, paletteHeaderRect.y, paletteHeaderRect.width, paletteHeaderRect.height);
+            s_vHierarchyPaletteFoldout = EditorGUI.Foldout(dataFoldoutRect, s_vHierarchyPaletteFoldout, "Palette Data", true, transparentFoldoutStyle);
+            
+            if (!s_vHierarchyPaletteFoldout) return;
+
+            var config = VHierarchy.VHierarchyPalette.instance;
+            if (config == null) return;
+
+  
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            if (s_hierarchyPaletteEditorInstance == null || s_hierarchyPaletteEditorInstance.target != config)
+                s_hierarchyPaletteEditorInstance = Editor.CreateEditor(config, typeof(VHierarchy.VHierarchyPaletteEditor));
+
+            if (s_hierarchyPaletteEditorInstance != null)
+            {
+                var oldIndent = EditorGUI.indentLevel;
+                EditorGUI.indentLevel = 0;
+                s_hierarchyPaletteEditorInstance.OnInspectorGUI();
+                EditorGUI.indentLevel = oldIndent;
+            }
+
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
+            VHierarchy.VHierarchyPalette.instance.Save();
+        }
         #endregion
     }
 }
