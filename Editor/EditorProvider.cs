@@ -6,13 +6,38 @@ namespace EditorBoostX
 {
     public static class EditorProvider
     {
-        private static bool s_vFavoritesFoldout = true;
-        private static bool s_vFoldersFoldout = true;
-        private static bool s_vFavoritesDataFoldout;
-        private static bool s_vFoldersDataFoldout;
-        private static bool s_vFoldersPaletteFoldout;
         private static Editor s_paletteEditorInstance; 
 
+        private static bool s_vFavoritesFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vFavoritesFoldout", true); // Mặc định là true
+            set => EditorPrefs.SetBool("EditorBoostX_vFavoritesFoldout", value);
+        }
+
+        private static bool s_vFoldersFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vFoldersFoldout", true);
+            set => EditorPrefs.SetBool("EditorBoostX_vFoldersFoldout", value);
+        }
+
+        private static bool s_vFavoritesDataFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vFavoritesDataFoldout", false); // Mặc định là false cho gọn
+            set => EditorPrefs.SetBool("EditorBoostX_vFavoritesDataFoldout", value);
+        }
+
+        private static bool s_vFoldersDataFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vFoldersDataFoldout", false);
+            set => EditorPrefs.SetBool("EditorBoostX_vFoldersDataFoldout", value);
+        }
+
+        private static bool s_vFoldersPaletteFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vFoldersPaletteFoldout", false);
+            set => EditorPrefs.SetBool("EditorBoostX_vFoldersPaletteFoldout", value);
+        }
+        
         [SettingsProvider]
         public static SettingsProvider CreateProvider()
         {
