@@ -1,0 +1,17 @@
+{
+  "name": "com.huyhung1404.editorboostx",
+  "version": "1.0.0",
+  "displayName": "EditorBoostX",
+  "description": "",
+  "unity": "2019.1",
+  "keywords": [
+    "editor"
+  ],
+  "author": {
+    "name": "huyhung1404",
+    "email": "huyhung1404@gmail.com",
+    "url": "https://github.com/huyhung1404"
+  },
+  "dependencies": {
+  }
+}
