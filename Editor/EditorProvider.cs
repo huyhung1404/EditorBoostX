@@ -6,11 +6,11 @@ namespace EditorBoostX
 {
     public static class EditorProvider
     {
-        private static Editor s_paletteEditorInstance; 
+        private static Editor s_paletteEditorInstance;
 
         private static bool s_vFavoritesFoldout
         {
-            get => EditorPrefs.GetBool("EditorBoostX_vFavoritesFoldout", true); // Mặc định là true
+            get => EditorPrefs.GetBool("EditorBoostX_vFavoritesFoldout", true);
             set => EditorPrefs.SetBool("EditorBoostX_vFavoritesFoldout", value);
         }
 
@@ -22,7 +22,7 @@ namespace EditorBoostX
 
         private static bool s_vFavoritesDataFoldout
         {
-            get => EditorPrefs.GetBool("EditorBoostX_vFavoritesDataFoldout", false); // Mặc định là false cho gọn
+            get => EditorPrefs.GetBool("EditorBoostX_vFavoritesDataFoldout", false);
             set => EditorPrefs.SetBool("EditorBoostX_vFavoritesDataFoldout", value);
         }
 
@@ -37,7 +37,13 @@ namespace EditorBoostX
             get => EditorPrefs.GetBool("EditorBoostX_vFoldersPaletteFoldout", false);
             set => EditorPrefs.SetBool("EditorBoostX_vFoldersPaletteFoldout", value);
         }
-        
+
+        private static bool s_vInspectorFoldout
+        {
+            get => EditorPrefs.GetBool("EditorBoostX_vInspectorFoldout", true);
+            set => EditorPrefs.SetBool("EditorBoostX_vInspectorFoldout", value);
+        }
+
         [SettingsProvider]
         public static SettingsProvider CreateProvider()
         {
@@ -49,6 +55,7 @@ namespace EditorBoostX
                     EditorGUILayout.BeginVertical(new GUIStyle { padding = new RectOffset(5, 5, 5, 5) });
                     DrawFavorites();
                     DrawFolders();
+                    DrawInspector();
                     EditorGUILayout.EndVertical();
                 },
                 deactivateHandler = () =>
@@ -415,7 +422,7 @@ namespace EditorBoostX
                 EditorGUILayout.ToggleLeft("Ctrl-Shift-E to collapse all folders", VFolders.VFoldersMenu.collapseEverythingEnabled);
 
             EditorGUI.indentLevel--;
-            
+
             EditorGUILayout.Space(10);
 
             var dataHeaderRect = EditorGUILayout.GetControlRect(false, 18);
@@ -425,7 +432,7 @@ namespace EditorBoostX
             var transparentFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
             var dataFoldoutRect = new Rect(dataHeaderRect.x + 4, dataHeaderRect.y, dataHeaderRect.width, dataHeaderRect.height);
             s_vFoldersDataFoldout = EditorGUI.Foldout(dataFoldoutRect, s_vFoldersDataFoldout, "Data", true, transparentFoldoutStyle);
-            
+
             DrawVFoldersDataContent();
 
             DrawVFoldersPalette(transparentFoldoutStyle);
@@ -454,14 +461,18 @@ namespace EditorBoostX
             {
                 EditorGUILayout.LabelField("This file stores data about which icons and colors are assigned to folders, along with bookmarks from navigation bar.", textStyle);
                 EditorGUILayout.Space(6);
-                EditorGUILayout.LabelField("If there are multiple people working on the project, it's better to store icon and color data in .meta files of folders to avoid merge conflicts. To do that, use the action button below.", textStyle);
+                EditorGUILayout.LabelField(
+                    "If there are multiple people working on the project, it's better to store icon and color data in .meta files of folders to avoid merge conflicts. To do that, use the action button below.",
+                    textStyle);
             }
             else
             {
-                EditorGUILayout.LabelField("Icon and color data is currently stored in folders .meta files of folders, and this file only contains bookmarks from navigation bar.", textStyle);
+                EditorGUILayout.LabelField(
+                    "Icon and color data is currently stored in folders .meta files of folders, and this file only contains bookmarks from navigation bar.", textStyle);
                 EditorGUILayout.Space(6);
                 EditorGUILayout.LabelField("If you want all data to be stored in this file, use the action button below to revert Team Mode.", textStyle);
             }
+
             EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space(8);
@@ -473,7 +484,7 @@ namespace EditorBoostX
                     var option = EditorUtility.DisplayDialogComplex("Licensing notice",
                         "To use vFolders 2 within a team, licenses must be purchased for each individual user as per the Asset Store EULA.\n\n Sharing one license across the team is illegal and considered piracy.",
                         "Acknowledge", null, null);
-                    
+
                     if (option == 0) VFolders.VFoldersData.storeDataInMetaFiles = true;
                 }
             }
@@ -484,7 +495,7 @@ namespace EditorBoostX
                     VFolders.VFoldersData.storeDataInMetaFiles = false;
                 }
             }
-            
+
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
 
@@ -505,13 +516,13 @@ namespace EditorBoostX
 
             var dataFoldoutRect = new Rect(paletteHeaderRect.x + 4, paletteHeaderRect.y, paletteHeaderRect.width, paletteHeaderRect.height);
             s_vFoldersPaletteFoldout = EditorGUI.Foldout(dataFoldoutRect, s_vFoldersPaletteFoldout, "Palette Data", true, transparentFoldoutStyle);
-            
+
             if (!s_vFoldersPaletteFoldout) return;
 
             var config = VFolders.VFoldersPalette.instance;
             if (config == null) return;
-            
-       
+
+
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             if (s_paletteEditorInstance == null || s_paletteEditorInstance.target != config)
@@ -521,14 +532,161 @@ namespace EditorBoostX
             {
                 var oldIndent = EditorGUI.indentLevel;
                 EditorGUI.indentLevel = 0;
-                
+
                 s_paletteEditorInstance.OnInspectorGUI();
-                
+
                 EditorGUI.indentLevel = oldIndent;
             }
 
             EditorGUILayout.EndVertical();
             VFolders.VFoldersPalette.instance.Save();
         }
+
+        #region Inspector
+
+        private static void DrawInspector()
+        {
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            var headerRect = EditorGUILayout.GetControlRect(false, 26);
+            var bgRect = new Rect(headerRect.x - 3, headerRect.y - 3, headerRect.width + 6, headerRect.height + 4);
+            GUI.Box(bgRect, GUIContent.none, GUI.skin.box);
+
+            var transparentFoldoutStyle = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
+
+            var foldoutRect = new Rect(headerRect.x + 4, headerRect.y, headerRect.width - 55, headerRect.height);
+            s_vInspectorFoldout = EditorGUI.Foldout(foldoutRect, s_vInspectorFoldout, "Inspector", true, transparentFoldoutStyle);
+
+            var toggleRect = new Rect(headerRect.xMax - 45, headerRect.y + 3, 45, 20);
+            
+            var isEnabled = !VInspector.VInspectorMenu.pluginDisabled;
+            var newEnabled = DrawSwitchToggle(toggleRect, isEnabled);
+
+            if (newEnabled != isEnabled)
+            {
+                VInspector.VInspectorMenu.pluginDisabled = !newEnabled;
+                VInspector.VInspectorMenu.attributesDisabled = !newEnabled;
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+            }
+
+            if (s_vInspectorFoldout && newEnabled)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.Space(5);
+                DrawVInspectorSettings();
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space(5);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private static void DrawVInspectorSettings()
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Features", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            
+            EditorGUI.BeginChangeCheck();
+            var nav = EditorGUILayout.ToggleLeft("Navigation bar", VInspector.VInspectorMenu.navigationBarEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.navigationBarEnabled = nav;
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var copy = EditorGUILayout.ToggleLeft("Copy ∕ Paste components", VInspector.VInspectorMenu.copyPasteButtonsEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.copyPasteButtonsEnabled = copy;
+                VInspector.VInspector.UpdateHeaderButtons(null);
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var save = EditorGUILayout.ToggleLeft("Save in play mode", VInspector.VInspectorMenu.playmodeSaveButtonEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.playmodeSaveButtonEnabled = save;
+                VInspector.VInspector.UpdateHeaderButtons(null);
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var win = EditorGUILayout.ToggleLeft("Create component windows with Alt-Drag", VInspector.VInspectorMenu.componentWindowsEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.componentWindowsEnabled = win;
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var anim = EditorGUILayout.ToggleLeft("Component expand ∕ collapse animations", VInspector.VInspectorMenu.componentAnimationsEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.componentAnimationsEnabled = anim;
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var min = EditorGUILayout.ToggleLeft("Minimal mode", VInspector.VInspectorMenu.minimalModeEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.minimalModeEnabled = min;
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var res = EditorGUILayout.ToggleLeft("Resettable variables", VInspector.VInspectorMenu.resettableVariablesEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.resettableVariablesEnabled = res;
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var hideS = EditorGUILayout.ToggleLeft("Hide script field", VInspector.VInspectorMenu.hideScriptFieldEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.hideScriptFieldEnabled = hideS;
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var hideH = EditorGUILayout.ToggleLeft("Hide help button", VInspector.VInspectorMenu.hideHelpButtonEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.hideHelpButtonEnabled = hideH;
+                VInspector.VInspector.UpdateHeaderButtons(null);
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var hideP = EditorGUILayout.ToggleLeft("Hide presets button", VInspector.VInspectorMenu.hidePresetsButtonEnabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                VInspector.VInspectorMenu.hidePresetsButtonEnabled = hideP;
+                VInspector.VInspector.UpdateHeaderButtons(null);
+                VInspector.VInspectorMenu.RepaintInspectors();
+            }
+
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Shortcuts", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            VInspector.VInspectorMenu.toggleActiveEnabled = EditorGUILayout.ToggleLeft("A to toggle component active", VInspector.VInspectorMenu.toggleActiveEnabled);
+            VInspector.VInspectorMenu.deleteEnabled = EditorGUILayout.ToggleLeft("X to delete component", VInspector.VInspectorMenu.deleteEnabled);
+            VInspector.VInspectorMenu.toggleExpandedEnabled = EditorGUILayout.ToggleLeft("E to expand ∕ collapse component", VInspector.VInspectorMenu.toggleActiveEnabled);
+            VInspector.VInspectorMenu.collapseEverythingElseEnabled =
+                EditorGUILayout.ToggleLeft("Shift-E to isolate component", VInspector.VInspectorMenu.collapseEverythingElseEnabled);
+            VInspector.VInspectorMenu.collapseEverythingEnabled =
+                EditorGUILayout.ToggleLeft("Ctrl-Shift-E to expand ∕ collapse all components", VInspector.VInspectorMenu.collapseEverythingEnabled);
+            EditorGUI.indentLevel--;
+        }
+
+        #endregion
     }
 }

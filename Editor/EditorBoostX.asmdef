@@ -3,7 +3,8 @@
     "rootNamespace": "EditorBoostX",
     "references": [
         "VFavorites",
-        "VFolders"
+        "VFolders",
+        "VInspector"
     ],
     "includePlatforms": [
         "Editor"
