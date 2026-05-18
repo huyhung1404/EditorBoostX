@@ -1817,7 +1817,7 @@ namespace VHierarchy
             loadData();
             loadPalette();
             loadDataAndPaletteDelayed();
-            migrateDataFromV1();
+            // migrateDataFromV1();
 
             // EditorApplication.delayCall += () => removeDeletedBookmarks();
 

@@ -1628,7 +1628,7 @@ namespace VFolders
             loadData();
             loadPalette();
             loadDataAndPaletteDelayed();
-            migrateDataFromV1();
+            // migrateDataFromV1();
             fixIconNamesForUnity6();
 
             OnDomainReloaded();
